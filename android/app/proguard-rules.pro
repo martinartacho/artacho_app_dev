@@ -1,0 +1,1 @@
+# No se requiere configuración especial para Flutter

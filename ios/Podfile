@@ -1,0 +1,19 @@
+platform :ios, '12.0'
+project 'Runner'
+
+# Flutter Pods
+flutter_application_path = '../'
+load File.join(flutter_application_path, '.ios', 'Flutter', 'podhelper.rb')
+
+target 'Runner' do
+  use_frameworks!
+  use_modular_headers!
+  
+  install_all_flutter_pods(flutter_application_path)
+end
+
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    flutter_additional_ios_build_settings(target)
+  end
+end
