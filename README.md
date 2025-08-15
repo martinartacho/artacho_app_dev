@@ -91,9 +91,7 @@ artacho_app_dev/
 
 ### 📌 Próximos Pasos
 Implementar CI/CD con GitHub Actions
-
 Migrar a Flutter 3.19
-
 Agregar pruebas de integración
 
 
