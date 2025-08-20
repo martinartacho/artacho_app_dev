@@ -1,196 +1,177 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:package_info_plus/package_info_plus.dart';
+import '../providers/auth_provider.dart';
+import '../providers/notification_provider.dart';
+import '../models/user_model.dart';
+import '../widgets/dashboard_user_info.dart';
+import '../widgets/dashboard_menu_section.dart';
 
-import 'providers/auth_provider.dart';
-import 'screens/main_scaffold.dart'; // al inicio
-import 'screens/login_screen.dart';
-import 'screens/register_screen.dart';
-import 'screens/forgot_password_screen.dart';
-import 'screens/dashboard_screen.dart';
-import 'screens/profile_screen.dart';
-import 'screens/feedback_screen.dart';
-import 'services/fcm_service.dart';
-
-// Clave global para navegación desde notificaciones
-final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
-
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  await Firebase.initializeApp();
-  await dotenv.load(fileName: "assets/.env");
-
-  final prefs = await SharedPreferences.getInstance();
-  runApp(
-    ChangeNotifierProvider(
-      create: (_) => AuthProvider(prefs: prefs),
-      child: const MyApp(),
-    ),
-  );
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class DashboardScreen extends StatefulWidget {
+  const DashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context);
-
-    return MaterialApp(
-      navigatorKey: navigatorKey,
-      onGenerateRoute: (settings) {
-        if (!authProvider.isAuthenticated &&
-            ['/dashboard', '/profile', '/main'].contains(settings.name)) {
-          return MaterialPageRoute(builder: (context) => const HomeScreen());
-        }
-
-        switch (settings.name) {
-/*           case '/':
-            return MaterialPageRoute(
-              builder: (context) => authProvider.isAuthenticated
-                  ? const DashboardScreen()
-                  : const HomeScreen(),
-            ); */
-          case '/main':
-            return MaterialPageRoute(
-                builder: (context) => const MainScaffold());
-          /*  case '/dashboard':
-            return MaterialPageRoute(
-                builder: (context) =>
-                    const DashboardScreen()); // ya no se usa directamente, pero puedes dejarla para pruebas */
-          case '/login':
-            return MaterialPageRoute(builder: (context) => const LoginScreen());
-          case '/register':
-            return MaterialPageRoute(
-                builder: (context) => const RegisterScreen());
-          case '/forgot-password':
-            return MaterialPageRoute(
-                builder: (context) => const ForgotPasswordScreen());
-          case '/dashboard':
-            return MaterialPageRoute(
-                builder: (context) => const DashboardScreen());
-          case '/main':
-            return MaterialPageRoute(
-                builder: (context) => const DashboardScreen());
-          case '/profile':
-            return MaterialPageRoute(
-                builder: (context) => const ProfileScreen());
-          case '/feedback':
-            return MaterialPageRoute(
-                builder: (context) => const FeedbackScreen());
-          case '/notification-detail':
-            final data = settings.arguments as Map<String, dynamic>;
-            return MaterialPageRoute(
-              builder: (context) => NotificationDetailScreen(data: data),
-            );
-          default:
-            return MaterialPageRoute(
-              builder: (context) => authProvider.isAuthenticated
-                  ? const DashboardScreen()
-                  : const HomeScreen(),
-            );
-        }
-      },
-      initialRoute: '/',
-    );
-  }
+  State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
-
-  @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  String _version = '';
+class _DashboardScreenState extends State<DashboardScreen> {
+  int _selectedIndex = 0;
+  late Future<List<dynamic>> _notificationsFuture;
 
   @override
   void initState() {
     super.initState();
-    PackageInfo.fromPlatform().then((info) {
-      setState(() {
-        _version = '${info.version}+${info.buildNumber}';
-      });
-    });
+    final notificationProvider =
+        Provider.of<NotificationProvider>(context, listen: false);
+    // _notificationsFuture = notificationProvider.fetchNotifications();
+    // _notificationsFuture = notificationProvider.getLatest();
+    _notificationsFuture = notificationProvider.getLatest(context);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final authProvider = Provider.of<AuthProvider>(context, listen: true);
+
+    if (authProvider.user != null && authProvider.user?.createdAt == null) {
+      authProvider.loadUserProfile();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    const frase = 'A poc a poc i bona lletra.';
+    final authProvider = Provider.of<AuthProvider>(context);
+    final notificationProvider = Provider.of<NotificationProvider>(context);
+    final UserModel? user = authProvider.user;
+
+    if (!authProvider.isAuthenticated) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+      });
+    }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Artacho App')),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text('👋 Hola 👋', style: TextStyle(fontSize: 24)),
-            const SizedBox(height: 40),
-            SizedBox(
-              width: 200,
-              child: ElevatedButton(
-                onPressed: () => Navigator.pushNamed(context, '/login'),
-                child: const Text('Entrar'),
-              ),
-            ),
-            const SizedBox(height: 15),
-            SizedBox(
-              width: 200,
-              child: ElevatedButton(
-                onPressed: () => Navigator.pushNamed(context, '/register'),
-                child: const Text('Registrarse'),
-              ),
-            ),
-            const SizedBox(height: 15),
-            TextButton(
-              onPressed: () => Navigator.pushNamed(context, '/forgot-password'),
-              child: const Text('Recuperar contraseña'),
-            ),
-            const SizedBox(height: 40),
-            Column(
-              children: [
-                Text(
-                  '“$frase”',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontStyle: FontStyle.italic,
-                    color: Colors.black87,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  'Versió: $_version',
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          ],
+      appBar: AppBar(
+        title: const Text('Dashboard'),
+        automaticallyImplyLeading: false,
+      ),
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: [
+          _buildDashboard(user),
+          _buildNotificationsList(notificationProvider),
+          const DashboardMenuSection(),
+        ],
+      ),
+      bottomNavigationBar:
+          _buildBottomNavigationBar(notificationProvider.unreadCount.value),
+    );
+  }
+
+  BottomNavigationBar _buildBottomNavigationBar(int unreadCount) {
+    return BottomNavigationBar(
+      currentIndex: _selectedIndex,
+      onTap: (index) => setState(() => _selectedIndex = index),
+      items: [
+        const BottomNavigationBarItem(
+          icon: Icon(Icons.home),
+          label: 'Inicio',
         ),
+        BottomNavigationBarItem(
+          icon: Stack(
+            children: [
+              const Icon(Icons.notifications),
+              if (unreadCount > 0)
+                Positioned(
+                  right: 0,
+                  top: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 16,
+                      minHeight: 16,
+                    ),
+                    child: Text(
+                      '$unreadCount',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          label: 'Notificaciones',
+        ),
+        const BottomNavigationBarItem(
+          icon: Icon(Icons.menu),
+          label: 'Menú',
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDashboard(UserModel? user) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 20),
+          if (user != null) ...[
+            DashboardUserInfo(user: user),
+          ],
+        ],
       ),
     );
   }
-}
 
-class NotificationDetailScreen extends StatelessWidget {
-  final Map<String, dynamic> data;
+  Widget _buildNotificationsList(NotificationProvider provider) {
+    return FutureBuilder<List<dynamic>>(
+      future: _notificationsFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(child: Text('Error al cargar notificaciones'));
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(child: Text('No hay notificaciones'));
+        }
 
-  const NotificationDetailScreen({super.key, required this.data});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Detalle de Notificación')),
-      body: Center(
-        child: Text(data.toString(), style: const TextStyle(fontSize: 16)),
-      ),
+        final notifications = snapshot.data!;
+        return ListView.separated(
+          padding: const EdgeInsets.all(16),
+          itemCount: notifications.length,
+          separatorBuilder: (context, index) => const Divider(),
+          itemBuilder: (context, index) {
+            final notif = notifications[index];
+            final isRead = notif['read_at'] != null;
+            return ListTile(
+              leading: const Icon(Icons.notifications_active),
+              title: Text(notif['title'] ?? 'Sin título'),
+              subtitle: Text(notif['body'] ?? 'Sin contenido'),
+              trailing: Icon(
+                Icons.circle,
+                color: isRead ? Colors.green : Colors.red,
+                size: 12,
+              ),
+              onTap: () async {
+                if (!isRead) {
+                  await provider.markAsRead(notif['id']);
+                  setState(() {
+                    notif['read_at'] = DateTime.now().toIso8601String();
+                  });
+                }
+              },
+            );
+          },
+        );
+      },
     );
   }
 }

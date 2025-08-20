@@ -41,7 +41,7 @@
 
         <!-- Servicio para mensajes en segundo plano -->
         <service
-            android:name="com.artacho.app.FlutterFirebaseMessagingService"
+            android:name="com.artacho.appdev.FlutterFirebaseMessagingService"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
