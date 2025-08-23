@@ -33,8 +33,9 @@ class _LoginScreenState extends State<LoginScreen> {
         // Inicializar FCM después de login exitoso
         await FCMService.initFCM(context);
         print('✅ Login exitoso, token: ${authProvider.token}');
-        // Navegar al dashboard
-        Navigator.pushReplacementNamed(context, '/dashboard');
+
+        // Navegar al dashboard principal
+        Navigator.pushReplacementNamed(context, '/main');
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

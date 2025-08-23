@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../providers/auth_provider.dart';
-import '../screens/dashboard_screen.dart';
-import '../screens/notifications_screen.dart';
+import 'dashboard_screen.dart';
+import 'notifications_screen.dart';
 
 class MainScaffold extends StatefulWidget {
   const MainScaffold({super.key});
@@ -12,30 +13,29 @@ class MainScaffold extends StatefulWidget {
 }
 
 class _MainScaffoldState extends State<MainScaffold> {
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
   int _selectedIndex = 0;
 
   final List<Widget> _screens = const [
     DashboardScreen(),
     NotificationsScreen(),
-    // Un widget vacío porque el menú es un Drawer
-    SizedBox.shrink(),
+    SizedBox.shrink(), // El menú se abre como Drawer
   ];
 
   void _onItemTapped(int index) {
     if (index == 2) {
-      Scaffold.of(context).openDrawer();
+      _scaffoldKey.currentState?.openDrawer();
     } else {
-      setState(() {
-        _selectedIndex = index;
-      });
+      setState(() => _selectedIndex = index);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context);
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
     return Scaffold(
+      key: _scaffoldKey,
       body: _screens[_selectedIndex],
       drawer: Drawer(
         child: ListView(
@@ -86,15 +86,15 @@ class _MainScaffoldState extends State<MainScaffold> {
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
-            label: 'Inicio B',
+            label: 'Inicio',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.notifications),
-            label: 'Notificaciones B',
+            label: 'Notificaciones',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.menu),
-            label: 'Menú B',
+            label: 'Menú',
           ),
         ],
       ),
