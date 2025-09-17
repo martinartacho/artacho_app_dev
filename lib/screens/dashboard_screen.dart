@@ -79,6 +79,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           icon: Icon(Icons.home),
           label: 'Inicio',
         ),
+        const BottomNavigationBarItem(
+          icon: Icon(Icons.event),
+          label: 'Calendario',
+        ),
         BottomNavigationBarItem(
           icon: Stack(
             children: [

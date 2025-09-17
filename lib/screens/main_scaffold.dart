@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../screens/dashboard_screen.dart';
 import '../screens/notifications_screen.dart';
+import '../screens/events_list_screen.dart';
 
 class MainScaffold extends StatefulWidget {
   const MainScaffold({super.key});
@@ -15,14 +16,15 @@ class _MainScaffoldState extends State<MainScaffold> {
   int _selectedIndex = 0;
 
   final List<Widget> _screens = const [
-    DashboardScreen(),
-    NotificationsScreen(),
-    // Un widget vacío porque el menú es un Drawer
-    SizedBox.shrink(),
+    DashboardScreen(), // index 0 → Inicio
+    NotificationsScreen(), // index 1 → Notificaciones
+    EventsListScreen(), // index 2 → Calendario
+    SizedBox.shrink(), // index 3 → Menú (Drawer)
   ];
 
   void _onItemTapped(int index) {
-    if (index == 2) {
+    if (index == 3) {
+      // Abrir el Drawer al pulsar "Menú"
       Scaffold.of(context).openDrawer();
     } else {
       setState(() {
@@ -83,18 +85,26 @@ class _MainScaffoldState extends State<MainScaffold> {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
+        type: BottomNavigationBarType
+            .fixed, // 👈 importante para que muestre todos los ítems
+        selectedItemColor: Colors.blue, // color de icono activo
+        unselectedItemColor: Colors.grey, // color de icono inactivo
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
-            label: 'Inicio B',
+            label: 'Inicio',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.notifications),
-            label: 'Notificaciones B',
+            label: 'Notificaciones',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.calendar_today),
+            label: 'Calendario',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.menu),
-            label: 'Menú B',
+            label: 'Menú',
           ),
         ],
       ),

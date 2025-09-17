@@ -14,6 +14,8 @@ import 'screens/dashboard_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/feedback_screen.dart';
 import 'services/fcm_service.dart';
+import 'providers/event_provider.dart';
+import 'screens/events_list_screen.dart';
 
 // Clave global para navegación desde notificaciones
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -25,9 +27,17 @@ void main() async {
   await dotenv.load(fileName: "assets/.env");
 
   final prefs = await SharedPreferences.getInstance();
+
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => AuthProvider(prefs: prefs),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (_) => AuthProvider(prefs: prefs),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => EventProvider(), // 👈 añadido
+        ),
+      ],
       child: const MyApp(),
     ),
   );
@@ -49,19 +59,9 @@ class MyApp extends StatelessWidget {
         }
 
         switch (settings.name) {
-/*           case '/':
-            return MaterialPageRoute(
-              builder: (context) => authProvider.isAuthenticated
-                  ? const DashboardScreen()
-                  : const HomeScreen(),
-            ); */
           case '/main':
             return MaterialPageRoute(
                 builder: (context) => const MainScaffold());
-          /*  case '/dashboard':
-            return MaterialPageRoute(
-                builder: (context) =>
-                    const DashboardScreen()); // ya no se usa directamente, pero puedes dejarla para pruebas */
           case '/login':
             return MaterialPageRoute(builder: (context) => const LoginScreen());
           case '/register':
@@ -87,6 +87,9 @@ class MyApp extends StatelessWidget {
             return MaterialPageRoute(
               builder: (context) => NotificationDetailScreen(data: data),
             );
+          case '/events':
+            return MaterialPageRoute(
+                builder: (context) => const EventsListScreen());
           default:
             return MaterialPageRoute(
               builder: (context) => authProvider.isAuthenticated
