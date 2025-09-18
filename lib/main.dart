@@ -27,7 +27,12 @@ void main() async {
   await dotenv.load(fileName: "assets/.env");
 
   final prefs = await SharedPreferences.getInstance();
-
+  /*runApp(
+    ChangeNotifierProvider(
+      create: (_) => AuthProvider(prefs: prefs),
+      child: const MyApp(),
+    ),
+  );*/
   runApp(
     MultiProvider(
       providers: [

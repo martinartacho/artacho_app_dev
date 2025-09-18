@@ -85,22 +85,25 @@ class _MainScaffoldState extends State<MainScaffold> {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
-        type: BottomNavigationBarType
-            .fixed, // 👈 importante para que muestre todos los ítems
-        selectedItemColor: Colors.blue, // color de icono activo
-        unselectedItemColor: Colors.grey, // color de icono inactivo
+        // type: BottomNavigationBarType.fixed,
+        //selectedItemColor: Colors.blue, // 👈 color visible
+        //unselectedItemColor: Colors.grey,
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: Colors.blue, // Fondo azul para mejor contraste
+        selectedItemColor: Colors.green, // Íconos seleccionados en blanco
+        unselectedItemColor: Colors.white.withOpacity(0.7),
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
             label: 'Inicio',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.notifications),
-            label: 'Notificaciones',
+            icon: Icon(Icons.event),
+            label: 'Calendario',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_today),
-            label: 'Calendario',
+            icon: Icon(Icons.notifications),
+            label: 'Notificaciones',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.menu),
