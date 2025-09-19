@@ -14,8 +14,8 @@ class _EventsListScreenState extends State<EventsListScreen> {
   void initState() {
     super.initState();
     // Cargar eventos al abrir la pantalla
-    Future.microtask(
-        () => Provider.of<EventProvider>(context, listen: false).fetchEvents());
+    Future.microtask(() => Provider.of<EventProvider>(context, listen: false)
+        .fetchEvents(context)); // Añadir context
   }
 
   @override
