@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../screens/dashboard_screen.dart';
 import '../screens/notifications_screen.dart';
+import '../screens/events_calendar_screen.dart';
 
 class MainScaffold extends StatefulWidget {
   const MainScaffold({super.key});
@@ -13,17 +14,19 @@ class MainScaffold extends StatefulWidget {
 
 class _MainScaffoldState extends State<MainScaffold> {
   int _selectedIndex = 0;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  final List<Widget> _screens = const [
-    DashboardScreen(),
-    NotificationsScreen(),
-    // Un widget vacío porque el menú es un Drawer
-    SizedBox.shrink(),
+  final List<Widget> _screens = [
+    const DashboardScreen(), // index 0 → Inicio
+    const EventsCalendarScreen(), // index 1 → Eventos
+    const NotificationsScreen(), // index 2 → Notificaciones
+    Container(), // index 3 → Placeholder para Menú
   ];
 
   void _onItemTapped(int index) {
-    if (index == 2) {
-      Scaffold.of(context).openDrawer();
+    if (index == 3) {
+      // Abrir el Drawer al pulsar "Menú" usando la GlobalKey
+      _scaffoldKey.currentState?.openDrawer();
     } else {
       setState(() {
         _selectedIndex = index;
@@ -36,6 +39,7 @@ class _MainScaffoldState extends State<MainScaffold> {
     final authProvider = Provider.of<AuthProvider>(context);
 
     return Scaffold(
+      key: _scaffoldKey,
       body: _screens[_selectedIndex],
       drawer: Drawer(
         child: ListView(
@@ -83,18 +87,26 @@ class _MainScaffoldState extends State<MainScaffold> {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: Colors.blue,
+        selectedItemColor: Colors.white,
+        unselectedItemColor: Colors.white.withOpacity(0.7),
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
-            label: 'Inicio B',
+            label: 'Inicio',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.calendar_today),
+            label: 'Calendario',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.notifications),
-            label: 'Notificaciones B',
+            label: 'Notificaciones',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.menu),
-            label: 'Menú B',
+            label: 'Menú',
           ),
         ],
       ),

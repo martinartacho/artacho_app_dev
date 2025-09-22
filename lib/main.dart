@@ -6,14 +6,17 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import 'providers/auth_provider.dart';
-import 'screens/main_scaffold.dart'; // al inicio
+import 'screens/main_scaffold.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/forgot_password_screen.dart';
-import 'screens/dashboard_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/feedback_screen.dart';
-import 'services/fcm_service.dart';
+// import 'services/fcm_service.dart';
+import 'providers/event_provider.dart';
+import 'screens/events_list_screen.dart';
+import 'screens/events_calendar_screen.dart';
+import 'screens/event_detail_screen.dart';
 
 // Clave global para navegación desde notificaciones
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -25,9 +28,17 @@ void main() async {
   await dotenv.load(fileName: "assets/.env");
 
   final prefs = await SharedPreferences.getInstance();
+
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => AuthProvider(prefs: prefs),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (_) => AuthProvider(prefs: prefs),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => EventProvider(),
+        ),
+      ],
       child: const MyApp(),
     ),
   );
@@ -49,19 +60,9 @@ class MyApp extends StatelessWidget {
         }
 
         switch (settings.name) {
-/*           case '/':
-            return MaterialPageRoute(
-              builder: (context) => authProvider.isAuthenticated
-                  ? const DashboardScreen()
-                  : const HomeScreen(),
-            ); */
           case '/main':
             return MaterialPageRoute(
                 builder: (context) => const MainScaffold());
-          /*  case '/dashboard':
-            return MaterialPageRoute(
-                builder: (context) =>
-                    const DashboardScreen()); // ya no se usa directamente, pero puedes dejarla para pruebas */
           case '/login':
             return MaterialPageRoute(builder: (context) => const LoginScreen());
           case '/register':
@@ -72,10 +73,7 @@ class MyApp extends StatelessWidget {
                 builder: (context) => const ForgotPasswordScreen());
           case '/dashboard':
             return MaterialPageRoute(
-                builder: (context) => const DashboardScreen());
-          case '/main':
-            return MaterialPageRoute(
-                builder: (context) => const DashboardScreen());
+                builder: (context) => const MainScaffold());
           case '/profile':
             return MaterialPageRoute(
                 builder: (context) => const ProfileScreen());
@@ -87,10 +85,21 @@ class MyApp extends StatelessWidget {
             return MaterialPageRoute(
               builder: (context) => NotificationDetailScreen(data: data),
             );
+          case '/events':
+            return MaterialPageRoute(
+                builder: (context) => const EventsListScreen());
+          case '/events-calendar':
+            return MaterialPageRoute(
+                builder: (context) => const EventsCalendarScreen());
+          case '/event-detail':
+            final event = settings.arguments as Map<String, dynamic>;
+            return MaterialPageRoute(
+              builder: (context) => EventDetailScreen(event: event),
+            );
           default:
             return MaterialPageRoute(
               builder: (context) => authProvider.isAuthenticated
-                  ? const DashboardScreen()
+                  ? const MainScaffold()
                   : const HomeScreen(),
             );
         }
