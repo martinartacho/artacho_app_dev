@@ -4,6 +4,7 @@ import '../providers/auth_provider.dart';
 import '../screens/dashboard_screen.dart';
 import '../screens/notifications_screen.dart';
 import '../screens/events_calendar_screen.dart';
+import '../services/notification_service.dart';
 
 class MainScaffold extends StatefulWidget {
   const MainScaffold({super.key});
@@ -14,28 +15,100 @@ class MainScaffold extends StatefulWidget {
 
 class _MainScaffoldState extends State<MainScaffold> {
   int _selectedIndex = 0;
+  int _unreadNotificationsCount = 0;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   final List<Widget> _screens = [
-    const DashboardScreen(), // index 0 → Inicio
-    const EventsCalendarScreen(), // index 1 → Eventos
-    const NotificationsScreen(), // index 2 → Notificaciones
-    Container(), // index 3 → Placeholder para Menú
+    const DashboardScreen(),
+    const EventsCalendarScreen(),
+    const NotificationsScreen(),
+    Container(),
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    // debugPrint('🔴 NotificationService - Error al obtener el contador: $e');🟡 MainScaffold initState - Iniciando _fetchUnreadCount');
+    _fetchUnreadCount();
+  }
+
+  // Método para obtener el contador de notificaciones no leídas
+  Future<void> _fetchUnreadCount() async {
+    // debugPrint('🔴 NotificationService - Error al obtener el contador: $e');🟡 _fetchUnreadCount llamado');
+    try {
+      final count = await NotificationService.getUnreadCount(context);
+      // debugPrint('🔴 NotificationService - Error al obtener el contador: $e');🟢 Contador recibido: $count');
+      if (mounted) {
+        setState(() {
+          _unreadNotificationsCount = count;
+          // debugPrint('🔴 NotificationService - Error al obtener el contador: $e');🟢 _unreadNotificationsCount actualizado a: $count');
+        });
+      } else {
+        // debugPrint('🔴 NotificationService - Error al obtener el contador: $e');🔴 Widget no está montado, no se puede actualizar');
+      }
+    } catch (e) {
+      // debugPrint('🔴 NotificationService - Error al obtener el contador: $e');🔴 Error en _fetchUnreadCount: $e');
+    }
+  }
+
   void _onItemTapped(int index) {
+    // debugPrint('🔴 NotificationService - Error al obtener el contador: $e');🟡 _onItemTapped: índice $index');
     if (index == 3) {
-      // Abrir el Drawer al pulsar "Menú" usando la GlobalKey
+      // debugPrint('🔴 NotificationService - Error al obtener el contador: $e');🟡 Abriendo drawer');
       _scaffoldKey.currentState?.openDrawer();
     } else {
       setState(() {
         _selectedIndex = index;
       });
+
+      // Actualizar contador cuando se selecciona notificaciones
+      if (index == 2) {
+        // debugPrint('🔴 NotificationService - Error al obtener el contador: $e');🟡 Notificaciones seleccionado, actualizando contador');
+        _fetchUnreadCount();
+      }
     }
+  }
+
+  // Widget para el ícono de notificaciones con badge
+  Widget _buildNotificationIcon() {
+    // debugPrint('🔴 NotificationService - Error al obtener el contador: $e');🟡 _buildNotificationIcon - Contador: $_unreadNotificationsCount');
+    return Stack(
+      children: [
+        const Icon(Icons.notifications),
+        if (_unreadNotificationsCount > 0)
+          Positioned(
+            right: 0,
+            top: 0,
+            child: Container(
+              padding: const EdgeInsets.all(2),
+              decoration: BoxDecoration(
+                color: Colors.red,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              constraints: const BoxConstraints(
+                minWidth: 15,
+                minHeight: 15,
+              ),
+              child: Text(
+                _unreadNotificationsCount > 9
+                    ? '9+'
+                    : _unreadNotificationsCount.toString(),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 6,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          )
+      ],
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    // debugPrint('🔴 NotificationService - Error al obtener el contador: $e');🟡 MainScaffold build - Contador: $_unreadNotificationsCount');
     final authProvider = Provider.of<AuthProvider>(context);
 
     return Scaffold(
@@ -91,20 +164,20 @@ class _MainScaffoldState extends State<MainScaffold> {
         backgroundColor: Colors.blue,
         selectedItemColor: Colors.white,
         unselectedItemColor: Colors.white.withOpacity(0.7),
-        items: const [
-          BottomNavigationBarItem(
+        items: [
+          const BottomNavigationBarItem(
             icon: Icon(Icons.home),
             label: 'Inicio',
           ),
-          BottomNavigationBarItem(
+          const BottomNavigationBarItem(
             icon: Icon(Icons.calendar_today),
             label: 'Calendario',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.notifications),
+            icon: _buildNotificationIcon(),
             label: 'Notificaciones',
           ),
-          BottomNavigationBarItem(
+          const BottomNavigationBarItem(
             icon: Icon(Icons.menu),
             label: 'Menú',
           ),

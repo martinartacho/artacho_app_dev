@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace = "com.artacho.appdev"
+    namespace = "com.artacho.app"
     compileSdk = 35
     ndkVersion = "27.0.12077973"
 
@@ -26,7 +26,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.artacho.appdev"
+        applicationId = "com.artacho.app"
         minSdk = 21
         targetSdk = 35
         versionCode = flutter.versionCode

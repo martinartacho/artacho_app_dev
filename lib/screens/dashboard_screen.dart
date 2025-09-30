@@ -13,6 +13,7 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  // ignore: unused_field
   int _unreadNotifications = 0;
   late Future<List<dynamic>> _notificationsFuture;
 

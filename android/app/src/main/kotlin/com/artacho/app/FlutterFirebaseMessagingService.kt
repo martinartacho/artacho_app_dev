@@ -1,4 +1,4 @@
-package com.artacho.appdev
+package com.artacho.app
 
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.embedding.engine.dart.DartExecutor
@@ -62,7 +62,7 @@ class FlutterFirebaseMessagingService : FirebaseMessagingService() {
 
         // Construir notificación
         val builder = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(com.artacho.appdev.R.mipmap.ic_launcher)
+            .setSmallIcon(com.artacho.app.R.mipmap.ic_launcher)
             .setContentTitle(title)
             .setContentText(body)
             .setPriority(NotificationCompat.PRIORITY_HIGH)

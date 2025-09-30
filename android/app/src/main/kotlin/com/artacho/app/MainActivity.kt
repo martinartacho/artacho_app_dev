@@ -1,4 +1,4 @@
-package com.artacho.appdev
+package com.artacho.app
 
 import android.app.PictureInPictureParams
 import android.os.Build

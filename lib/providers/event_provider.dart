@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import '../config.dart';
 import '../services/api_service.dart';
 
 class EventProvider with ChangeNotifier {
@@ -46,7 +47,7 @@ class EventProvider with ChangeNotifier {
       final token = prefs.getString('token');
 
       final response = await http.get(
-        Uri.parse('https://dev.artacho.org/api/events/$eventId'),
+        Uri.parse('${Config.baseUrl}/events/$eventId'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
@@ -78,7 +79,7 @@ class EventProvider with ChangeNotifier {
       final token = prefs.getString('token');
 
       final response = await http.post(
-        Uri.parse('https://dev.artacho.org/api/events/$eventId/answers'),
+        Uri.parse('${Config.baseUrl}/events/$eventId/answers'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
@@ -106,7 +107,7 @@ class EventProvider with ChangeNotifier {
       final token = prefs.getString('token');
 
       final response = await http.put(
-        Uri.parse('https://dev.artacho.org/api/answers/$answerId'),
+        Uri.parse('${Config.baseUrl}/answers/$answerId'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
@@ -131,7 +132,7 @@ class EventProvider with ChangeNotifier {
       final token = prefs.getString('token');
 
       final response = await http.delete(
-        Uri.parse('https://dev.artacho.org/api/answers/$answerId'),
+        Uri.parse('${Config.baseUrl}/answers/$answerId'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
@@ -143,6 +144,22 @@ class EventProvider with ChangeNotifier {
       }
     } catch (e) {
       rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>> getEventResponses(
+      BuildContext context, int eventId) async {
+    try {
+      final dio = await ApiService().getApiClient(context);
+      final response = await dio.get('/events/$eventId/user-responses');
+
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        throw Exception('Error al cargar respuestas: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error de conexión: ${e.toString()}');
     }
   }
 }

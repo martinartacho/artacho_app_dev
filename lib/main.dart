@@ -12,7 +12,6 @@ import 'screens/register_screen.dart';
 import 'screens/forgot_password_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/feedback_screen.dart';
-// import 'services/fcm_service.dart';
 import 'providers/event_provider.dart';
 import 'screens/events_list_screen.dart';
 import 'screens/events_calendar_screen.dart';
@@ -133,6 +132,13 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     const frase = 'A poc a poc i bona lletra.';
 
+    // Separar la versión del build number
+    String versionDisplay = _version;
+    if (_version.contains('+')) {
+      final parts = _version.split('+');
+      versionDisplay = '${parts[0]} (${parts[1]})';
+    }
+
     return Scaffold(
       appBar: AppBar(title: const Text('Artacho App')),
       body: Center(
@@ -162,28 +168,45 @@ class _HomeScreenState extends State<HomeScreen> {
               child: const Text('Recuperar contraseña'),
             ),
             const SizedBox(height: 40),
-            Column(
-              children: [
-                Text(
-                  '“$frase”',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontStyle: FontStyle.italic,
-                    color: Colors.black87,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  'Versió: $_version',
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
+            // Widget extraído - ahora puede ser const
+            _FooterSection(frase: frase, versionDisplay: versionDisplay),
           ],
         ),
       ),
+    );
+  }
+}
+
+// Widget separado y constante
+class _FooterSection extends StatelessWidget {
+  final String frase;
+  final String versionDisplay;
+
+  const _FooterSection({
+    required this.frase,
+    required this.versionDisplay,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(
+          '“$frase”',
+          style: const TextStyle(
+            fontSize: 14,
+            fontStyle: FontStyle.italic,
+            color: Colors.black87,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 5),
+        Text(
+          'Versió: $versionDisplay',
+          style: const TextStyle(fontSize: 12, color: Colors.grey),
+          textAlign: TextAlign.center,
+        ),
+      ],
     );
   }
 }

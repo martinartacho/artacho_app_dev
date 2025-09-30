@@ -96,10 +96,10 @@ class AuthProvider with ChangeNotifier {
           }
 
           await prefs.setString('token', _token!);
-          print('🔑 TOKEN desde Flutter: $_token');
+          debugPrint('🔑 TOKEN desde Flutter: $_token');
           notifyListeners();
         } else {
-          print('🔑 NO TOKEN desde Flutter');
+          debugPrint('🔑 NO TOKEN desde Flutter');
           throw Exception('Token no encontrado en la respuesta');
         }
       } else {

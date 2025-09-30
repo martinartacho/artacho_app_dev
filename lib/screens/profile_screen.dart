@@ -56,7 +56,7 @@ class _ProfileScreenState extends State<ProfileScreen>
         _emailController.text = authProvider.user!.email;
       }
     } catch (e) {
-      // print('Error cargando perfil: $e');
+      // debugPrint('Error cargando perfil: $e');
     }
   }
 

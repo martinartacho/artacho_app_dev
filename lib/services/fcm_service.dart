@@ -21,13 +21,13 @@ class FCMService {
       final token = await _firebaseMessaging.getToken();
 
       if (token != null) {
-        print('📲 Token FCM obtenido: $token');
+        debugPrint('📲 Token FCM obtenido: $token');
         await _saveTokenToBackend(context, token);
       } else {
-        print('⚠️ No se pudo obtener el token FCM');
+        debugPrint('⚠️ No se pudo obtener el token FCM');
       }
     } catch (e) {
-      print('❌ Error en initFCM: $e');
+      debugPrint('❌ Error en initFCM: $e');
     }
   }
 
@@ -38,7 +38,7 @@ class FCMService {
       final userToken = authProvider.token;
 
       if (userToken == null) {
-        print('⚠️ No hay token de sesión del usuario');
+        debugPrint('⚠️ No hay token de sesión del usuario');
         return;
       }
 
@@ -55,9 +55,10 @@ class FCMService {
         }),
       );
 
-      print('📡 Respuesta backend: ${response.statusCode} ${response.body}');
+      debugPrint(
+          '📡 Respuesta backend: ${response.statusCode} ${response.body}');
     } catch (e) {
-      print('❌ Error enviando token al backend: $e');
+      debugPrint('❌ Error enviando token al backend: $e');
     }
   }
 }

@@ -16,9 +16,16 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   bool _isSubmitting = false;
   bool _canRespond = false;
   late Map<String, dynamic> _event;
+  // ignore: _loadingDetails
   bool _loadingDetails = false;
+  // ignore: _errorMessage
   String? _errorMessage;
   final ScrollController _scrollController = ScrollController();
+
+  // Nuevas variables para manejar respuestas existentes
+  bool _hasExistingResponses = false;
+  bool _loadingResponses = false;
+  Map<int, String> _existingAnswers = {};
 
   // Guardar los campos de visibilidad originales
   late bool _originalVisible;
@@ -41,6 +48,11 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     if (_event['has_questions'] == true &&
         (_event['questions'] == null || _event['questions'].isEmpty)) {
       _loadEventDetails();
+    } else if (_event['has_questions'] == true &&
+        _event['questions'] != null &&
+        _event['questions'].isNotEmpty) {
+      // Si ya tenemos preguntas, cargar respuestas existentes
+      _loadExistingResponses();
     }
   }
 
@@ -115,7 +127,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
 
       // Verificar que la respuesta es un Map
       if (response is! Map<String, dynamic>) {
-        throw Exception('Formato de respuesta inesperado');
+        throw Exception(
+            'Formato de respuesta inesperado: ${response.runtimeType}');
       }
 
       // Si la respuesta tiene un campo 'data', usarlo
@@ -141,11 +154,60 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
 
       // Revisar visibilidad nuevamente con la información completa
       _checkEventVisibility();
+
+      // Cargar respuestas existentes después de cargar detalles
+      if (_canRespond) {
+        _loadExistingResponses();
+      }
     } catch (e) {
       setState(() {
         _loadingDetails = false;
         _errorMessage = 'Error al cargar detalles: $e';
       });
+    }
+  }
+
+  // Nuevo método para cargar respuestas existentes
+  Future<void> _loadExistingResponses() async {
+    if (!_canRespond) return;
+
+    setState(() {
+      _loadingResponses = true;
+    });
+
+    try {
+      final eventProvider = Provider.of<EventProvider>(context, listen: false);
+      final responses =
+          await eventProvider.getEventResponses(context, _event['id']);
+
+      setState(() {
+        _loadingResponses = false;
+
+        if (responses['data'] != null && responses['data']['answers'] != null) {
+          _hasExistingResponses = true;
+
+          // Convertir las respuestas al formato que usa nuestro formulario
+          final answers = responses['data']['answers'];
+          if (answers is Map) {
+            answers.forEach((key, value) {
+              final questionId = int.tryParse(key.toString());
+              if (questionId != null && value != null) {
+                _existingAnswers[questionId] = value.toString();
+                _answers[questionId] =
+                    value.toString(); // Pre-cargar respuestas
+              }
+            });
+          }
+        } else {
+          _hasExistingResponses = false;
+        }
+      });
+    } catch (e) {
+      setState(() {
+        _loadingResponses = false;
+        _hasExistingResponses = false;
+      });
+      debugPrint('Error cargando respuestas existentes: $e');
     }
   }
 
@@ -158,37 +220,65 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
       appBar: AppBar(
         title: Text(_event['title'] ?? 'Detalle del Evento'),
       ),
-      body: _loadingDetails
-          ? const Center(child: CircularProgressIndicator())
-          : _errorMessage != null
-              ? Center(child: Text(_errorMessage!))
-              : Column(
-                  children: [
-                    Expanded(
-                      child: SingleChildScrollView(
-                        controller: _scrollController,
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildEventInfo(_event),
-                            const SizedBox(height: 24),
-                            if (questions.isNotEmpty && _canRespond)
-                              _buildQuestionsForm(questions)
-                            else if (questions.isNotEmpty && !_canRespond)
-                              _buildNotAvailableMessage()
-                            else if (_event['has_questions'] == true)
-                              const Text('Cargando preguntas...')
-                            else
-                              const Text('Este evento no tiene preguntas.'),
-                          ],
-                        ),
+      body: Column(
+        children: [
+          // Banner informativo sobre respuestas existentes
+          if (_hasExistingResponses && _canRespond)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              color: Colors.blue[50],
+              child: Row(
+                children: [
+                  Icon(Icons.info, color: Colors.blue[700], size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Ya has respondido a este evento. Puedes modificar tus respuestas.',
+                      style: TextStyle(
+                        color: Colors.blue[800],
+                        fontSize: 14,
                       ),
                     ),
-                    if (questions.isNotEmpty && _canRespond)
-                      _buildSubmitButton(eventProvider),
-                  ],
-                ),
+                  ),
+                ],
+              ),
+            ),
+
+          Expanded(
+            child: SingleChildScrollView(
+              controller: _scrollController,
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildEventInfo(_event),
+                  const SizedBox(height: 24),
+
+                  // Indicador de carga de respuestas
+                  if (_loadingResponses)
+                    const Center(child: CircularProgressIndicator()),
+
+                  if (questions.isNotEmpty && _canRespond && !_loadingResponses)
+                    _buildQuestionsForm(questions)
+                  else if (questions.isNotEmpty && !_canRespond)
+                    _buildNotAvailableMessage()
+                  else if (_event['has_questions'] == true)
+                    const Text('Cargando preguntas...')
+                  else
+                    const Text('Este evento no tiene preguntas.'),
+                ],
+              ),
+            ),
+          ),
+
+          // Botón fijo en la parte inferior
+          if (questions.isNotEmpty && _canRespond && !_loadingResponses)
+            SafeArea(
+              child: _buildSubmitButton(eventProvider),
+            ),
+        ],
+      ),
     );
   }
 
@@ -196,11 +286,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          event['title'] ?? 'Sin título',
-          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 8),
         if (event['description'] != null)
           Text(
             event['description'],
@@ -304,10 +389,14 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 },
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor:
+                      _hasExistingResponses ? Colors.orange : Colors.blue,
                 ),
-                child: const Text(
-                  'Enviar respuestas',
-                  style: TextStyle(fontSize: 16),
+                child: Text(
+                  _hasExistingResponses
+                      ? 'Actualizar respuestas'
+                      : 'Enviar respuestas',
+                  style: const TextStyle(fontSize: 16, color: Colors.white),
                 ),
               ),
       ),
@@ -321,6 +410,9 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     final options = question['options'] ?? [];
     final isRequired = question['required'] == true;
 
+    // Verificar si ya hay respuesta para esta pregunta
+    final hasExistingAnswer = _existingAnswers.containsKey(questionId);
+
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       child: Padding(
@@ -328,13 +420,45 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              questionText,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: isRequired ? Colors.red : Colors.black,
-              ),
+            // Encabezado con indicador de respuesta existente
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    questionText,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: isRequired ? Colors.red : Colors.black,
+                    ),
+                  ),
+                ),
+                if (hasExistingAnswer)
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.green[50],
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(color: Colors.green),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.check, color: Colors.green, size: 12),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Respondido',
+                          style: TextStyle(
+                            color: Colors.green[800],
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
             ),
+
             if (isRequired) const SizedBox(height: 4),
             if (isRequired)
               const Text(
@@ -342,11 +466,15 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 style: TextStyle(fontSize: 12, color: Colors.red),
               ),
             const SizedBox(height: 8),
+
             if (type == 'text')
               TextFormField(
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
+                initialValue:
+                    _answers[questionId], // Pre-cargar respuesta existente
+                decoration: InputDecoration(
+                  border: const OutlineInputBorder(),
                   hintText: 'Escribe tu respuesta',
+                  labelText: hasExistingAnswer ? 'Respuesta actual' : null,
                 ),
                 onChanged: (value) {
                   _answers[questionId] = value;
@@ -468,7 +596,11 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Respuestas enviadas correctamente')),
+        SnackBar(
+          content: Text(_hasExistingResponses
+              ? 'Respuestas actualizadas correctamente'
+              : 'Respuestas enviadas correctamente'),
+        ),
       );
 
       Navigator.pop(context);

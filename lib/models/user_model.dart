@@ -3,7 +3,7 @@ class UserModel {
   final String name;
   final String email;
   final String? token;
-  final String? createdAt; // Nuevo campo para fecha de creación
+  final String? createdAt;
 
   UserModel({
     required this.id,
@@ -24,10 +24,10 @@ class UserModel {
   }
 
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'name': name,
-    'email': email,
-    'token': token,
-    'created_at': createdAt,
-  };
+        'id': id,
+        'name': name,
+        'email': email,
+        'token': token,
+        'created_at': createdAt,
+      };
 }
